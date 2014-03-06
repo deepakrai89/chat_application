@@ -1,0 +1,88 @@
+<html>
+
+    <head>
+        <title>Chat application</title>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="jquery.js"></script>
+        <link type="text/css" rel="stylesheet" href='style.css' />
+    </head>
+
+    <body>
+
+        <div id='user_form_container'>
+            Please enter your username 
+            <div id='username_error'></div>
+            
+            <form id='user_form'>
+                <input id='nickname'>
+                <input id='nickname_submit' type='submit'/>
+            </form>
+            
+        </div>
+
+        <div id='chat_container'>
+            
+            <div id="message_box"></div>
+            
+            <form id='chat_form'>
+                <input id="message">
+                <button type='submit' id='send'>Send</button>
+            </form>
+            
+            <div id='usernames'></div>
+            
+        </div>
+
+        <script>
+
+            $(document).ready(function() {
+
+                var socket = io.connect();
+                
+                // whenever a new message is added
+                socket.on('message', function(data) {
+                    $('#message_box').append('<b>' + data.user + ' : </b>' + data.message + '<br/>');
+                });
+                
+                // whenever a new user is added
+                socket.on('usernames', function(data) {
+                    var html_data = '';
+
+                    for (i = 0; i < data.length; i++) {
+                        html_data += data[i] + '<br/>';
+                    }
+                    $('#usernames').html(html_data);
+                });
+                
+                // send message 
+                $('#send').on('click', function(e) {
+                    e.preventDefault();
+                    socket.emit('client_data', $('#message').val());
+                    $('#message').val('');
+                });
+                
+                // for adding username
+                $('#nickname_submit').on('click', function(e) {
+                    e.preventDefault();
+
+                    if ($('#nickname').val() != '') {
+                        socket.emit('username', $('#nickname').val(), function(data) {
+
+                            if (!data) {
+                                $('#username_error').html('Username already exists. Please try another username.');
+                            } else {
+                                $('#user_form_container').hide();
+                                $('#chat_container').show();
+                            }
+
+                            $('#nickname').val('');
+                        });
+                    }
+                });
+            });
+
+        </script>
+
+    </body>
+
+</html>
